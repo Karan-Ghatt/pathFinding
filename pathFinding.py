@@ -34,13 +34,12 @@ TURQUOISE = (64, 224, 208)
 
 class CubeNode:
 
-
     def __init__(self, row, col, width, total_rows):
         self.row = row
         self.col = col
         self.x = row * width  # Used to determine position on grid
         self.y = col * width  # Used to determine position on grid
-        self.col = WHITE      # Starting w/ all white cubes in grid
+        self.color = WHITE      # Starting w/ all white cubes in grid
         self.neighbors = []
         self.width = width
         self.total_rows = total_rows
@@ -48,81 +47,79 @@ class CubeNode:
         # Indexing w/ row and col position
         # Methods define state and update cube
 
-        def get_pos(self):
-            return self.row, self.col
+    def get_pos(self):
+        return self.row, self.col
+
+    # Method to define status of cube, visited or not
+    # what makes a spot closed - they define the colour of the cube to help
+    # us know what the cube does - i.e start, finish, etc
+
+    # If the cube is red then it is closed
+    def is_closed(self):
+        return self.color == RED
+
+    ## DEF IS_x METHODS ##
+    # If the cube is green then it is open
+    def is_open(self):
+        return self.color == GREEN
+
+    # If the cube is a battier then it is black
+    def is_barrier(self):
+        return self.color == BLACK
+
+    # If the cube is orage then it is start node
+    def is_start(self):
+        return self.color == ORANGE
+
+    # If the cube is purple  then it is end node
+    def is_end(self):
+        return self.color == TURQUOISE
+
+    # Reset colour/type of node
+    def reset(self):
+        return self.color == WHITE
+
+    ## DEF MAKE_x METHODS ##
+    # If the cube is red then it is closed
+    def make_closed(self):
+        self.color = RED
+
+    # If the cube is green then it is open
+    def make_open(self):
+        self.color = GREEN
+
+    # If the cube is a barrier then it is black
+    def make_barrier(self):
+        self.color = BLACK
+
+    # If the cube is orage then it is start node
+    def make_start(self):
+        self.color = ORANGE
+
+    # If the cube is purple  then it is end node
+    def make_end(self):
+        self.color = TURQUOISE
+
+    # Path of algo to be shown w/ purple cubes
+    def make_path(self):
+        self.color = PURPLE
 
 
-        # Method to define status of cube, visited or not
-        # what makes a spot closed - they define the colour of the cube to help
-        # us know what the cube does - i.e start, finish, etc
+    # Method to craw cube on screen - where do we want to draw cube
+    # pass window, colour and rectangle, passing x, y, height, rect
+    # (0,0) is the top left corner of the window, moving to the right caused
+    # x to increase. Moving down causes y to increase. Start drawing from (0,0)
+    def draw(self, win):
+        pygame.draw.rect(win, self.color, (self.x, self.y, self.width, self.width))
 
+    #
+    def update_neighbors(self, grid):
+        pass
 
-        # If the cube is red then it is closed
-        def is_closed(self):
-            return self.color == RED
-
-        ## DEF IS_x METHODS ##
-        # If the cube is green then it is open
-        def is_open(self):
-            return self.color == GREEN
-
-        # If the cube is a battier then it is black
-        def is_barrier(slef):
-            return self.color == BLACK
-
-        # If the cube is orage then it is start node
-        def is_start(self):
-            return self.color == ORANGE
-
-        # If the cube is purple  then it is end node
-        def is_end(self):
-            return self.color == TURQUOISE
-
-        # Reset colour/type of node
-        def reset(self):
-            return self.color == WHITE
-
-        ## DEF MAKE_x METHODS ##
-        # If the cube is red then it is closed
-        def make_closed(self):
-            return self.color == RED
-
-        # If the cube is green then it is open
-        def make_open(self):
-            self.color == GREEN
-
-        # If the cube is a barrier then it is black
-        def make_barrier(slef):
-            self.color == BLACK
-
-        # If the cube is orage then it is start node
-        def make_start(self):
-            self.color == ORANGE
-
-        # If the cube is purple  then it is end node
-        def make_end(self):
-            self.color == TURQUOISE
-
-        # Path of algo to be shown w/ purple cubes
-        def make_path(self):
-            self.color = PURPLE
-
-
-        # Method to craw cube on screen - where do we want to draw cube
-        # pass window, colour and rectangle, passing x, y, height, rect
-        # (0,0) is the top left corner of the window, moving to the right caused
-        # x to increase. Moving down causes y to increase. Start drawing from (0,0)
-        def draw(self, win):
-            pygame.draw.rect(win, self.color, (self.x, self.y, self.widh, self.widh))
-
-        #
-        def update_neighbors(self, grid):
-            pass
-
-        # Less than function, how we compare two cubes together.
-        #
-        def __lt__(self, other):
-            return False
+    # Less than function, how we compare two cubes together.
+    #
+    def __lt__(self, other):
+        return False
 
 
 # Huristic function for algo - p1 and p2 are point one and point two:
@@ -165,7 +162,7 @@ def draw(win, grid, rows, width):
 
     for row in grid:
         for cube in row:
-            cube.draw(width)
+            cube.draw(win)
 
     draw_grid(win, rows, width)
     pygame.display.update()
@@ -198,6 +195,8 @@ def main(win, width):
     # At begging of while loop, check through all events that have happened and check
     # what they are
     while run:
+        # Calling draw function to draw grid in window - calling every loop
+        draw(win, grid, ROWS, width)
         for event in pygame.event.get():
 
             # Close game if click x
@@ -208,9 +207,34 @@ def main(win, width):
             if started:
                 continue
 
+            # Checks if user has pressed mouse - used to initiate drawing of cube
+            if pygame.mouse.get_pressed()[0]: # Left mouse click
+                pos = pygame.mouse.get_pos()
+                row, col = get_clicked_(pos, ROWS, width) # what cube we clicked on grid
+                cube = grid[row][col]
+
+
+                # First click always start
+                if not start and cube != end:
+                    start = cube
+                    start.make_start()
+
+                # Second click always end
+                elif not end and cube != start:
+                    end = cube
+                    end.make_end()
+
+                elif cube != start and cube != end:
+                    cube.make_barrier()
+
+
+            elif pygame.mouse.get_pressed()[2]:
+                pass
+
     pygame.quit()
 
 
+main(WIN, WIN_WIDTH)
 
 
 
